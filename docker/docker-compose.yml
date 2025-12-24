@@ -1,0 +1,34 @@
+services:
+  #EMQX MQTT Broker
+  emqx:
+    image: emqx/emqx:latest
+    container_name: emqx_broker
+    ports:
+      - [cite_start]"1883:1883"     # MQTT protocol port 
+      - "18083:18083"   # EMQX Dashboard (User: admin, Pass: public)
+    restart: always
+
+  #TimescaleDB (PostgreSQL with Time-Series features)
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16
+    container_name: timescaledb
+    environment:
+      - POSTGRES_PASSWORD=Biko@1010
+    ports:
+      - [cite_start]"5432:5432"     
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    restart: always
+
+  # S Dashboard for Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_viz
+    ports:
+      - "3000:3000"     # Grafana UI (User: admin, Pass: admin)
+    depends_on:
+      - timescaledb
+    restart: always
+
+volumes:
+  timescaledb_data:

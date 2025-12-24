@@ -1,0 +1,25 @@
+# Python virtual environment
+env/
+venv/
+ENV/
+
+# Python byte-code
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating system files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+
+# IDE settings (VS Code / PyCharm)
+.vscode/
+.idea/
+
+# Local database data (prevents giant files in Git)
+timescaledb_data/
+*.log
