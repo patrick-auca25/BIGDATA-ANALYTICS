@@ -4,7 +4,7 @@ SELECT create_hypertable(
     'timestamp', 
     chunk_time_interval => INTERVAL '1 day',
     if_not_exists => TRUE,
-    migrate_data => TRUE  -- If you already have data in energy_readings
+    migrate_data => TRUE  
 );
 
 -- Create hypertables with different chunk intervals
