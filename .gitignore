@@ -22,4 +22,4 @@ desktop.ini
 
 # Local database data (prevents giant files in Git)
 timescaledb_data/
-*.log
+*.logscripts/historical_data.csv 
