@@ -1,0 +1,25 @@
+BASELINE PERFORMANCE - 1 DAY CHUNKS
+============================================================
+Date: 2026-01-02 19:53:55
+Platform: Windows (PostgreSQL 18 Local)
+Dataset: ~2M rows (14 days, 500 meters)
+Chunk Interval: 1 day
+Cold Cache: YES (PostgreSQL restarted before each query)
+============================================================
+
+Query 1: Hourly avg today
+  Execution Time: 96.15 ms
+  Rows Returned: 15
+
+Query 2: Peak periods (7 days)
+  Execution Time: 360.20 ms
+  Rows Returned: 10
+
+Query 3: Monthly per meter
+  Execution Time: 3515.56 ms
+  Rows Returned: 1000
+
+Query 4: Full scan
+  Execution Time: 471.07 ms
+  Rows Returned: 1
+

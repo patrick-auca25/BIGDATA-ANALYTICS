@@ -1,0 +1,4 @@
+"hypertable_name","compressed_size"
+"energy_readings","88 MB"
+"energy_readings_3h","110 MB"
+"energy_readings_week","86 MB"

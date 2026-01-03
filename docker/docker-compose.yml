@@ -8,17 +8,7 @@ services:
       - "18083:18083"   # EMQX Dashboard
     restart: always
 
-  # TimescaleDB (PostgreSQL + Time-Series)
-  timescaledb:
-    image: timescale/timescaledb:latest-pg16
-    container_name: timescaledb
-    environment:
-      POSTGRES_PASSWORD: Biko@1010
-    ports:
-      - "5432:5432"
-    volumes:
-      - timescaledb_data:/var/lib/postgresql/data
-    restart: always
+ 
 
   # Grafana Dashboard
   grafana:
@@ -26,9 +16,7 @@ services:
     container_name: grafana_viz
     ports:
       - "3000:3000"     # Grafana UI
-    depends_on:
-      - timescaledb
+    
     restart: always
 
-volumes:
-  timescaledb_data:
+
