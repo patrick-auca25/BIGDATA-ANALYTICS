@@ -1,9 +1,9 @@
 QUERY PERFORMANCE BEFORE COMPRESSION
 ============================================================
-Date: 2026-01-02 22:43:21
+Date: 2026-01-05 21:20:37
 
 Table                Query 2 (ms)    Query 3 (ms)   
 ------------------------------------------------------------
-1-day chunks         619.41          3040.40        
-3-hour chunks        868.64          3881.02        
-1-week chunks        686.77          3089.18        
+1-day chunks         510.01          3883.36        
+3-hour chunks        634.71          3711.54        
+1-week chunks        497.30          2404.37        

@@ -2,11 +2,21 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "kind": "Dashboard",
   "metadata": {
-    "name": "adg5gsq",
-    "generation": 1,
-    "creationTimestamp": "2026-01-03T10:16:58Z",
-    "labels": {},
-    "annotations": {}
+    "name": "adbb52k",
+    "namespace": "default",
+    "uid": "82Uy1p2VGBSnQgJXicRBXTwwq0zzOyDK3UdFDn4eXg0X",
+    "resourceVersion": "1",
+    "generation": 4,
+    "creationTimestamp": "2026-01-06T13:18:01Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "10"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:ef96ye6a69udcc",
+      "grafana.app/updatedBy": "user:ef96ye6a69udcc",
+      "grafana.app/updatedTimestamp": "2026-01-06T13:18:01Z",
+      "grafana.app/folder": ""
+    }
   },
   "spec": {
     "annotations": [
@@ -47,9 +57,9 @@
                       "spec": {
                         "dataset": "energy",
                         "editorMode": "code",
-                        "format": "table",
+                        "format": "time_series",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    timestamp as time,\r\n    meter_id,\r\n    power as \"Power (kW)\"\r\nFROM energy_readings\r\nWHERE timestamp >= NOW() - INTERVAL '1 hour'\r\nORDER BY timestamp DESC\r\nLIMIT 1000;",
+                        "rawSql": "SELECT \n    time_bucket('5 minutes', timestamp) AS time,\n    ROUND(AVG(power)::numeric, 2) AS value,\n    'Region ' || LEFT(meter_id, 1) AS metric\nFROM energy_readings\nWHERE timestamp > NOW() - INTERVAL '1 hour'\nGROUP BY time, metric\nORDER BY time;",
                         "sql": {
                           "columns": [
                             {
@@ -78,10 +88,10 @@
               "transformations": []
             }
           },
-          "description": "",
+          "description": "Real-time power consumption (5-minute aggregation)",
           "id": 1,
           "links": [],
-          "title": " Real-time Meter Readings (Last Hour)",
+          "title": "Real-time Power Last Hour)",
           "vizConfig": {
             "group": "timeseries",
             "kind": "VizConfig",
@@ -95,12 +105,12 @@
                     "axisBorderShow": false,
                     "axisCenteredZero": false,
                     "axisColorMode": "text",
-                    "axisLabel": "",
+                    "axisLabel": "Power (kW)",
                     "axisPlacement": "auto",
                     "barAlignment": 0,
                     "barWidthFactor": 0.6,
                     "drawStyle": "line",
-                    "fillOpacity": 0,
+                    "fillOpacity": 10,
                     "gradientMode": "none",
                     "hideFrom": {
                       "legend": false,
@@ -108,13 +118,13 @@
                       "viz": false
                     },
                     "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineWidth": 1,
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "pointSize": 5,
                     "scaleDistribution": {
                       "type": "linear"
                     },
-                    "showPoints": "auto",
+                    "showPoints": "never",
                     "showValues": false,
                     "spanNulls": false,
                     "stacking": {
@@ -131,13 +141,10 @@
                       {
                         "color": "green",
                         "value": 0
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
                       }
                     ]
-                  }
+                  },
+                  "unit": "kwatt"
                 },
                 "overrides": []
               },
@@ -150,7 +157,7 @@
                 },
                 "tooltip": {
                   "hideZeros": false,
-                  "mode": "single",
+                  "mode": "multi",
                   "sort": "none"
                 }
               }
@@ -178,7 +185,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "WITH today AS (\r\n    SELECT \r\n        time_bucket('1 hour', timestamp) as hour,\r\n        SUM(energy) as energy_today\r\n    FROM energy_readings\r\n    WHERE timestamp >= DATE_TRUNC('day', NOW())\r\n    GROUP BY hour\r\n),\r\nyesterday AS (\r\n    SELECT \r\n        time_bucket('1 hour', timestamp) as hour,\r\n        SUM(energy) as energy_yesterday\r\n    FROM energy_readings\r\n    WHERE timestamp >= DATE_TRUNC('day', NOW()) - INTERVAL '1 day'\r\n      AND timestamp < DATE_TRUNC('day', NOW())\r\n    GROUP BY hour\r\n)\r\nSELECT \r\n    today.hour as time,\r\n    today.energy_today as \"Today\",\r\n    yesterday.energy_yesterday as \"Yesterday\"\r\nFROM today\r\nLEFT JOIN yesterday ON EXTRACT(HOUR FROM today.hour) = EXTRACT(HOUR FROM yesterday.hour)\r\nORDER BY today.hour;",
+                        "rawSql": "SELECT \n    LPAD(EXTRACT(HOUR FROM time_bucket('1 hour', timestamp))::text, 2, '0') || ':00' AS \"Hour\",\n    ROUND(SUM(CASE WHEN DATE(timestamp) = CURRENT_DATE - 1 THEN energy END)::numeric, 2) AS \"Yesterday\",\n    ROUND(SUM(CASE WHEN DATE(timestamp) = CURRENT_DATE THEN energy END)::numeric, 2) AS \"Today\"\nFROM energy_readings\nWHERE timestamp >= CURRENT_DATE - INTERVAL '1 day'\n  AND timestamp < CURRENT_DATE + INTERVAL '1 day'\nGROUP BY EXTRACT(HOUR FROM time_bucket('1 hour', timestamp))\nORDER BY EXTRACT(HOUR FROM time_bucket('1 hour', timestamp));",
                         "sql": {
                           "columns": [
                             {
@@ -207,12 +214,12 @@
               "transformations": []
             }
           },
-          "description": "",
+          "description": "Hourly energy consumption comparison: Today vs Yesterday",
           "id": 2,
           "links": [],
-          "title": "Daily Consumption - Today vs Yesterday",
+          "title": "Daily Consumption: Today vs Yesterday",
           "vizConfig": {
-            "group": "timeseries",
+            "group": "barchart",
             "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
@@ -224,31 +231,18 @@
                     "axisBorderShow": false,
                     "axisCenteredZero": false,
                     "axisColorMode": "text",
-                    "axisLabel": "",
+                    "axisLabel": "Energy (kWh)",
                     "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 0,
+                    "fillOpacity": 80,
                     "gradientMode": "none",
                     "hideFrom": {
                       "legend": false,
                       "tooltip": false,
                       "viz": false
                     },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
                     "lineWidth": 1,
-                    "pointSize": 5,
                     "scaleDistribution": {
                       "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
                     },
                     "thresholdsStyle": {
                       "mode": "off"
@@ -260,28 +254,34 @@
                       {
                         "color": "green",
                         "value": 0
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
                       }
                     ]
-                  }
+                  },
+                  "unit": "kwatth"
                 },
                 "overrides": []
               },
               "options": {
+                "barRadius": 0,
+                "barWidth": 0.7,
+                "fullHighlight": false,
+                "groupWidth": 0.7,
                 "legend": {
                   "calcs": [],
                   "displayMode": "list",
                   "placement": "bottom",
                   "showLegend": true
                 },
+                "orientation": "vertical",
+                "showValue": "auto",
+                "stacking": "none",
                 "tooltip": {
                   "hideZeros": false,
-                  "mode": "single",
+                  "mode": "multi",
                   "sort": "none"
-                }
+                },
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 0
               }
             },
             "version": "12.3.1"
@@ -305,9 +305,9 @@
                       "spec": {
                         "dataset": "energy",
                         "editorMode": "code",
-                        "format": "table",
+                        "format": "time_series",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    time_bucket('1 day', timestamp) as time,\r\n    SUM(energy) as \"Daily Energy (kWh)\"\r\nFROM energy_readings\r\nWHERE timestamp >= NOW() - INTERVAL '7 days'\r\nGROUP BY time\r\nORDER BY time;",
+                        "rawSql": "SELECT \n    time_bucket('1 day', timestamp) as time,\n    ROUND(SUM(energy)::numeric, 2) as \"Daily Energy (kWh)\"\nFROM energy_readings\nWHERE timestamp >= NOW() - INTERVAL '7 days'\nGROUP BY time\nORDER BY time;",
                         "sql": {
                           "columns": [
                             {
@@ -336,10 +336,10 @@
               "transformations": []
             }
           },
-          "description": "",
+          "description": "Daily energy consumption for the last 7 days",
           "id": 3,
           "links": [],
-          "title": "Weekly Trends",
+          "title": "Weekly Energy Consumption",
           "vizConfig": {
             "group": "barchart",
             "kind": "VizConfig",
@@ -353,7 +353,7 @@
                     "axisBorderShow": false,
                     "axisCenteredZero": false,
                     "axisColorMode": "text",
-                    "axisLabel": "",
+                    "axisLabel": "Energy (kWh)",
                     "axisPlacement": "auto",
                     "fillOpacity": 80,
                     "gradientMode": "none",
@@ -376,13 +376,10 @@
                       {
                         "color": "green",
                         "value": 0
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
                       }
                     ]
-                  }
+                  },
+                  "unit": "kwatth"
                 },
                 "overrides": []
               },
@@ -395,9 +392,9 @@
                   "calcs": [],
                   "displayMode": "list",
                   "placement": "bottom",
-                  "showLegend": true
+                  "showLegend": false
                 },
-                "orientation": "auto",
+                "orientation": "vertical",
                 "showValue": "auto",
                 "stacking": "none",
                 "tooltip": {
@@ -432,7 +429,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    time_bucket('1 day', timestamp) as time,\r\n    LEFT(meter_id, 1) as region,\r\n    SUM(energy) as energy\r\nFROM energy_readings\r\nWHERE timestamp >= DATE_TRUNC('month', NOW())\r\nGROUP BY time, region\r\nORDER BY time, region;",
+                        "rawSql": "SELECT \r\n    meter_id AS metric,\r\n    ROUND(SUM(energy)::numeric, 2) AS value\r\nFROM energy_readings\r\nWHERE timestamp >= DATE_TRUNC('month', NOW())\r\nGROUP BY meter_id\r\nORDER BY value DESC\r\nLIMIT 10;",
                         "sql": {
                           "columns": [
                             {
@@ -461,107 +458,10 @@
               "transformations": []
             }
           },
-          "description": "",
+          "description": "Energy usage grouped by region (first digit of meter ID)",
           "id": 4,
           "links": [],
-          "title": "Monthly Energy by Region",
-          "vizConfig": {
-            "group": "piechart",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    }
-                  }
-                },
-                "overrides": []
-              },
-              "options": {
-                "legend": {
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "pieType": "pie",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "sort": "desc",
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
-              }
-            },
-            "version": "12.3.1"
-          }
-        }
-      },
-      "panel-5": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "group": "grafana-postgresql-datasource",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "dataset": "energy",
-                        "editorMode": "code",
-                        "format": "table",
-                        "rawQuery": true,
-                        "rawSql": "SELECT \r\n    'Raw Data Query' as query_type,\r\n    51.08 as execution_time_ms\r\nUNION ALL\r\nSELECT \r\n    'Continuous Aggregate',\r\n   32.07;",
-                        "sql": {
-                          "columns": [
-                            {
-                              "parameters": [],
-                              "type": "function"
-                            }
-                          ],
-                          "groupBy": [
-                            {
-                              "property": {
-                                "type": "string"
-                              },
-                              "type": "groupBy"
-                            }
-                          ],
-                          "limit": 50
-                        }
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "",
-          "id": 5,
-          "links": [],
-          "title": "Query Execution Time - Raw vs Aggregated",
+          "title": "Energy Usage by Region (Current Month)",
           "vizConfig": {
             "group": "barchart",
             "kind": "VizConfig",
@@ -593,15 +493,19 @@
                     }
                   },
                   "thresholds": {
-                    "mode": "absolute",
+                    "mode": "percentage",
                     "steps": [
                       {
                         "color": "green",
                         "value": 0
                       },
                       {
+                        "color": "orange",
+                        "value": 70
+                      },
+                      {
                         "color": "red",
-                        "value": 80
+                        "value": 85
                       }
                     ]
                   }
@@ -610,7 +514,7 @@
               },
               "options": {
                 "barRadius": 0,
-                "barWidth": 0.97,
+                "barWidth": 0.16,
                 "fullHighlight": false,
                 "groupWidth": 0.7,
                 "legend": {
@@ -621,6 +525,129 @@
                 },
                 "orientation": "auto",
                 "showValue": "auto",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xField": "metric",
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 0
+              }
+            },
+            "version": "12.3.1"
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "group": "grafana-postgresql-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dataset": "energy",
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT \n    'Raw Data Query' AS \"Query Type\",\n    226.07 AS \"Execution Time (ms)\"\nUNION ALL\nSELECT \n    'Continuous Aggregate',\n    108.51;",
+                        "sql": {
+                          "columns": [
+                            {
+                              "parameters": [],
+                              "type": "function"
+                            }
+                          ],
+                          "groupBy": [
+                            {
+                              "property": {
+                                "type": "string"
+                              },
+                              "type": "groupBy"
+                            }
+                          ],
+                          "limit": 50
+                        }
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Query performance comparison: Raw data vs Continuous aggregate (15-min buckets, 24h)",
+          "id": 5,
+          "links": [],
+          "title": "Query Performance: Raw vs Continuous Aggregate",
+          "vizConfig": {
+            "group": "barchart",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "Execution Time (ms)",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 80,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      }
+                    ]
+                  },
+                  "unit": "ms"
+                },
+                "overrides": []
+              },
+              "options": {
+                "barRadius": 0,
+                "barWidth": 0.6,
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "orientation": "horizontal",
+                "showValue": "always",
                 "stacking": "none",
                 "tooltip": {
                   "hideZeros": false,
@@ -654,7 +681,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    'energy_readings (1-day)' as table_name,\r\n    pg_size_pretty(before_compression_total_bytes) AS size_before,\r\n    pg_size_pretty(after_compression_total_bytes) AS size_after,\r\n    ROUND(100 * (before_compression_total_bytes - after_compression_total_bytes)::numeric / \r\n    NULLIF(before_compression_total_bytes, 0), 2) AS percent_saved\r\nFROM hypertable_compression_stats('energy_readings')\r\n\r\nUNION ALL\r\n\r\nSELECT \r\n    'energy_readings_3h (3-hour)',\r\n    pg_size_pretty(before_compression_total_bytes),\r\n    pg_size_pretty(after_compression_total_bytes),\r\n    ROUND(100 * (before_compression_total_bytes - after_compression_total_bytes)::numeric / \r\n    NULLIF(before_compression_total_bytes, 0), 2)\r\nFROM hypertable_compression_stats('energy_readings_3h')\r\n\r\nUNION ALL\r\n\r\nSELECT \r\n    'energy_readings_week (1-week)',\r\n    pg_size_pretty(before_compression_total_bytes),\r\n    pg_size_pretty(after_compression_total_bytes),\r\n    ROUND(100 * (before_compression_total_bytes - after_compression_total_bytes)::numeric / \r\n    NULLIF(before_compression_total_bytes, 0), 2)\r\nFROM hypertable_compression_stats('energy_readings_week');",
+                        "rawSql": "SELECT \n    'energy_readings (1-day)' AS \"Table\",\n    pg_size_pretty(before_compression_total_bytes) AS \"Before\",\n    pg_size_pretty(after_compression_total_bytes) AS \"After\",\n    ROUND(100 * (before_compression_total_bytes - after_compression_total_bytes)::numeric / \n    NULLIF(before_compression_total_bytes, 0), 2) || '%' AS \"Saved\"\nFROM hypertable_compression_stats('energy_readings')\nUNION ALL\nSELECT \n    'energy_readings_3h (3-hour)',\n    pg_size_pretty(before_compression_total_bytes),\n    pg_size_pretty(after_compression_total_bytes),\n    ROUND(100 * (before_compression_total_bytes - after_compression_total_bytes)::numeric / \n    NULLIF(before_compression_total_bytes, 0), 2) || '%'\nFROM hypertable_compression_stats('energy_readings_3h')\nUNION ALL\nSELECT \n    'energy_readings_week (1-week)',\n    pg_size_pretty(before_compression_total_bytes),\n    pg_size_pretty(after_compression_total_bytes),\n    ROUND(100 * (before_compression_total_bytes - after_compression_total_bytes)::numeric / \n    NULLIF(before_compression_total_bytes, 0), 2) || '%'\nFROM hypertable_compression_stats('energy_readings_week');",
                         "sql": {
                           "columns": [
                             {
@@ -683,10 +710,10 @@
               "transformations": []
             }
           },
-          "description": "",
+          "description": "Storage efficiency comparison: Before vs After compression for all chunk strategies",
           "id": 6,
           "links": [],
-          "title": "Storage efficiency gains from compression ",
+          "title": "Storage Efficiency: Compression Statistics",
           "vizConfig": {
             "group": "table",
             "kind": "VizConfig",
@@ -697,7 +724,7 @@
                     "mode": "thresholds"
                   },
                   "custom": {
-                    "align": "auto",
+                    "align": "center",
                     "cellOptions": {
                       "type": "auto"
                     },
@@ -712,10 +739,6 @@
                       {
                         "color": "green",
                         "value": 0
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
                       }
                     ]
                   }
@@ -724,48 +747,12 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "table_name"
+                      "options": "Table"
                     },
                     "properties": [
                       {
                         "id": "custom.width",
-                        "value": 237
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "size_after"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 101
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "percent_saved"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 121
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "size_before"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 119
+                        "value": 250
                       }
                     ]
                   }
@@ -780,7 +767,7 @@
           }
         }
       },
-      "panel-8": {
+      "panel-7": {
         "kind": "Panel",
         "spec": {
           "data": {
@@ -799,7 +786,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    '1-day chunks' as \"Chunk Strategy\",\r\n    619.41 as \"Query 2 (ms)\",\r\n    3040.40 as \"Query 3 (ms)\"\r\nUNION ALL\r\nSELECT '3-hour chunks', 868.64, 3881.02\r\nUNION ALL\r\nSELECT '1-week chunks', 686.77, 3089.18;",
+                        "rawSql": "SELECT \n    '1-day chunks' AS \"Chunk Strategy\",\n    209.78 AS \"Query 2 (ms)\",\n    1370.63 AS \"Query 3 (ms)\",\n    790.21 AS \"Average (ms)\"\nUNION ALL\nSELECT \n    '3-hour chunks',\n    402.20,\n    3800.38,\n    2101.29\nUNION ALL\nSELECT \n    '1-week chunks',\n    470.18,\n    2885.06,\n    1677.62\nORDER BY \"Average (ms)\" ASC;",
                         "sql": {
                           "columns": [
                             {
@@ -828,10 +815,11 @@
               "transformations": []
             }
           },
-          "description": "",
-          "id": 8,
+          "description": "Chunk strategy performance comparison: Query 2 (Peak periods 7d) & Query 3 (Monthly per meter) on uncompressed data",
+          "id": 7,
           "links": [],
-          "title": "Query Performance by Chunk Strategy (Uncompressed)",
+          "title": "Chunk Strategy Performance Comparison",
+          "transparent": true,
           "vizConfig": {
             "group": "table",
             "kind": "VizConfig",
@@ -863,9 +851,18 @@
                         "value": 80
                       }
                     ]
-                  }
+                  },
+                  "unit": "short"
                 },
-                "overrides": []
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Chunk Strategy"
+                    },
+                    "properties": []
+                  }
+                ]
               },
               "options": {
                 "cellHeight": "sm",
@@ -889,8 +886,8 @@
                 "name": "panel-1"
               },
               "height": 8,
-              "width": 12,
-              "x": 6,
+              "width": 24,
+              "x": 0,
               "y": 0
             }
           },
@@ -925,10 +922,10 @@
             "spec": {
               "element": {
                 "kind": "ElementReference",
-                "name": "panel-5"
+                "name": "panel-4"
               },
               "height": 8,
-              "width": 12,
+              "width": 24,
               "x": 0,
               "y": 16
             }
@@ -938,12 +935,12 @@
             "spec": {
               "element": {
                 "kind": "ElementReference",
-                "name": "panel-4"
+                "name": "panel-5"
               },
-              "height": 8,
+              "height": 6,
               "width": 12,
-              "x": 12,
-              "y": 16
+              "x": 0,
+              "y": 24
             }
           },
           {
@@ -953,9 +950,9 @@
                 "kind": "ElementReference",
                 "name": "panel-6"
               },
-              "height": 8,
+              "height": 6,
               "width": 12,
-              "x": 0,
+              "x": 12,
               "y": 24
             }
           },
@@ -964,12 +961,12 @@
             "spec": {
               "element": {
                 "kind": "ElementReference",
-                "name": "panel-8"
+                "name": "panel-7"
               },
-              "height": 8,
-              "width": 12,
-              "x": 12,
-              "y": 24
+              "height": 6,
+              "width": 24,
+              "x": 0,
+              "y": 30
             }
           }
         ]
@@ -978,12 +975,14 @@
     "links": [],
     "liveNow": false,
     "preload": false,
-    "tags": [],
+    "tags": [
+      "energy",
+      "timescaledb",
+      "performance"
+    ],
     "timeSettings": {
-      "autoRefresh": "",
+      "autoRefresh": "5m",
       "autoRefreshIntervals": [
-        "5s",
-        "10s",
         "30s",
         "1m",
         "5m",
@@ -994,12 +993,12 @@
         "1d"
       ],
       "fiscalYearStartMonth": 0,
-      "from": "now-6h",
+      "from": "2026-01-06T13:30:00.000Z",
       "hideTimepicker": false,
       "timezone": "browser",
-      "to": "now"
+      "to": "2026-01-06T15:25:00.000Z"
     },
-    "title": "Energy Monitoring Performance Analysis",
+    "title": "Energy Monitoring ",
     "variables": []
   },
   "status": {}
